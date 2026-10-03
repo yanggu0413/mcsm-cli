@@ -2,11 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-專為 AI Agent 與開發者設計的 MCSManager 命令列管理工具。透過 `mcsm` 管理面板、節點與 Minecraft 執行個體，並以 JSON 輸出配合腳本或終端中的 Agent 工作流程。
-
-- **低上下文負擔**：Agent 需要時再呼叫命令，不必預先載入大量工具定義。
-- **JSON 與管線整合**：使用 `--json` 輸出結構化資料，可搭配 `jq`、shell 腳本及其他工具處理。
-- **憑證持久化**：儲存面板網址與 API Key，之後執行命令不必重複輸入。
+專為開發者與終端中的 AI Agent 設計的 MCSManager 命令列工具，可用 JSON 輸出資料，方便後續檢查、腳本處理與命令列管線串接。
 
 ## 安裝
 
