@@ -2,83 +2,78 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-专为 **AI Agent**（Claude Code、Aider、OpenHands、Cline 等）与开发者设计的 **MCSManager** 命令行运维工具。
+專為 AI Agent 與開發者設計的 MCSManager 命令列管理工具。透過 `mcsm` 管理面板、節點與 Minecraft 執行個體，並以 JSON 輸出配合腳本或終端中的 Agent 工作流程。
 
-- ⚡ **零 Token 预加载负担**：无需预先在 LLM 上下文中注入几十个工具的 Schema。
-- 🔗 **支持 Unix 管道与脚本组合**：通过 `--json` 原生支持 `jq` 与管道处理。
-- 🔑 **凭据持久化**：配置一次即可在整个系统随处调用。
+- **低上下文負擔**：Agent 需要時再呼叫命令，不必預先載入大量工具定義。
+- **JSON 與管線整合**：使用 `--json` 輸出結構化資料，可搭配 `jq`、shell 腳本及其他工具處理。
+- **憑證持久化**：儲存面板網址與 API Key，之後執行命令不必重複輸入。
 
----
+## 安裝
 
-## 🚀 快速安装与配置
-
-```bash
-# 全局安装
+```sh
 npm install -g mcsm-cli
-
-# 设置面板地址与 API Key（保存在 ~/.mcsmrc.json）
-mcsm config set --url http://localhost:23333 --key your-api-key
-
-# 查看配置
-mcsm config get
+mcsm --help
 ```
 
----
+## 設定
 
-## 💻 常用命令示例
+設定 MCSManager 面板網址與 API Key：
 
-```bash
-# 1. 查看面板概览
+```sh
+mcsm config set --url http://localhost:23333 --key <API_KEY>
+```
+
+設定會儲存在使用者家目錄的 `~/.mcsmrc.json`。也可以透過 `MCSM_BASE_URL` 與 `MCSM_API_KEY` 環境變數提供設定。API Key 是機密資料，請勿提交至版本控制或貼入公開日誌。
+
+## 功能總覽
+
+CLI 以 MCSManager 面板為入口，透過節點 ID 與執行個體 UUID 指定管理目標。主要功能包括：
+
+- **面板與節點**：查看面板概況、系統資源與節點統計；列出節點、測試或重新連線，並支援管理員新增及移除節點。
+- **執行個體管理**：依節點列出執行個體、跨節點搜尋、查看即時資訊及主控台日誌；建立或更新設定，並執行啟動、正常停止、重新啟動、傳送主控台指令及刪除等操作。
+- **執行個體檔案**：列出目錄、讀取或寫入文字檔、上傳本機檔案、從網址下載檔案、建立目錄，以及壓縮或解壓縮 ZIP；也可查看檔案系統狀態與背景檔案工作。
+- **Minecraft 模組**：從 Modrinth、CurseForge 與 SpigotMC 搜尋模組，列出執行個體中已安裝的模組，並切換模組啟用狀態。
+- **排程工作**：列出、建立及移除執行個體排程，例如定時重新啟動或執行主控台指令。
+- **使用者資訊**：查看目前登入使用者及其可用執行個體；管理員可列出面板使用者。
+- **Java 執行環境**：列出節點可用的 Java、下載並安裝版本、註冊自訂路徑、指定執行個體使用的 runtime，或移除 runtime 設定。
+- **JSON 與腳本整合**：查詢指令可搭配 `--json` 輸出結構化資料，便於交由 Agent 判讀、用 `jq` 篩選，或串接其他 shell 工具。
+
+## 使用範例
+
+```sh
+# 查看面板概況與節點
 mcsm overview --json
-
-# 2. 节点管理
 mcsm daemon list --json
-mcsm daemon link <daemonId>
 
-# 3. 实例操作
+# 列出節點上的執行個體
 mcsm instance list <daemonId> --json
-mcsm instance get <daemonId> <uuid>
-mcsm instance start <daemonId> <uuid>
-mcsm instance stop <daemonId> <uuid>
-mcsm instance restart <daemonId> <uuid>
-mcsm instance kill <daemonId> <uuid>
-mcsm instance cmd <daemonId> <uuid> "say Hello World"
-mcsm instance log <daemonId> <uuid> --size 20KB
 
-# 4. 文件操作
-mcsm file ls <daemonId> <uuid> /plugins --json
-mcsm file cat <daemonId> <uuid> /server.properties
-mcsm file write <daemonId> <uuid> /eula.txt "eula=true"
-mcsm file upload <daemonId> <uuid> ./mods.zip /plugins/mods.zip
-mcsm file upload <daemonId> <uuid> ./server-pack.zip /server-pack.zip --unzip
-# 若 panel 回传的 daemon 位址不可达，可指定从当前环境可连线的地址
-mcsm file upload <daemonId> <uuid> ./setup.exe /setup.exe --daemon-addr http://100.92.190.117:24444
-mcsm file rm <daemonId> <uuid> /old.jar
-mcsm file mkdir <daemonId> <uuid> /backup
-mcsm file download <daemonId> <uuid> https://example.com/mod.jar /plugins/mod.jar
+# 查詢執行個體狀態與日誌
+mcsm instance get <daemonId> <uuid> --json
+mcsm instance log <daemonId> <uuid> --size 20KB --json
 
-# 5. 用户与权限
-mcsm user list --json
-mcsm user me
-
-# 6. Minecraft Mod 管理
+# 搜尋 Minecraft 模組
 mcsm mod search "jei" --loader fabric --version 1.20.1 --json
-mcsm mod list <daemonId> <uuid> --json
-mcsm mod toggle <daemonId> <uuid> jei-1.20.1.jar
 ```
 
----
+完整指令與參數請使用 `mcsm --help`，或參閱[專案 GitHub README](https://github.com/yanggu0413/mcsm-cli#readme)。
 
-## 🛠️ 本地开发与构建
+`instance kill` 會強制終止程序，可能造成世界存檔損毀；刪除執行個體、檔案、節點或排程也可能造成資料或服務中斷。執行這些操作前，請先確認目標及影響範圍。
 
-```bash
-cd mcsm-cli
+## Agent Skill
+
+本儲存庫另提供 [MCSManager CLI Agent Skill](https://github.com/yanggu0413/mcsm-cli/tree/main/skills/mcsm-cli)。Skill 不包含在 npm 套件中，請依照所使用 AI Agent 的 skills 安裝方式取得。
+
+## 本地開發
+
+在儲存庫中的 `mcsm-cli/` 目錄執行：
+
+```sh
 pnpm install
 pnpm test
 pnpm build
 ```
 
----
+## 授權
 
-## 📄 License
 MIT License
