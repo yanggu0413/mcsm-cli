@@ -1,0 +1,42 @@
+{
+  "name": "mcsm-cli",
+  "version": "1.0.0",
+  "description": "Powerful CLI & AI Agent toolsuite for MCSManager",
+  "main": "build/index.js",
+  "type": "module",
+  "bin": {
+    "mcsm": "./build/index.js",
+    "mcsm-cli": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node build/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "mcsm",
+    "mcsmanager",
+    "cli",
+    "ai-agent",
+    "minecraft"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.8.1",
+    "commander": "^15.0.0",
+    "form-data": "^4.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}
