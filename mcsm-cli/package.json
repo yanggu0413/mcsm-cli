@@ -2,6 +2,15 @@
   "name": "mcsm-cli",
   "version": "1.0.0",
   "description": "Powerful CLI & AI Agent toolsuite for MCSManager",
+  "author": "Yanggu0413",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanggu0413/mcsm-cli.git"
+  },
+  "homepage": "https://github.com/yanggu0413/mcsm-cli#readme",
+  "bugs": {
+    "url": "https://github.com/yanggu0413/mcsm-cli/issues"
+  },
   "main": "build/index.js",
   "type": "module",
   "bin": {
