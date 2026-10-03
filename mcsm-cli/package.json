@@ -5,8 +5,8 @@
   "main": "build/index.js",
   "type": "module",
   "bin": {
-    "mcsm": "./build/index.js",
-    "mcsm-cli": "./build/index.js"
+    "mcsm": "build/index.js",
+    "mcsm-cli": "build/index.js"
   },
   "files": [
     "build",
