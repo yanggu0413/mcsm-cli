@@ -3,6 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Command } from 'commander';
+import { createRequire } from 'node:module';
 import {
   resolveClientConfig,
   saveStoredConfig,
@@ -13,12 +14,14 @@ import {
 import { printOutput, printError } from './output.js';
 import { MCSMClient } from './client/mcsmClient.js';
 
+const require = createRequire(import.meta.url);
+const packageMetadata = require('../package.json') as { version: string };
 const program = new Command();
 
 program
   .name('mcsm')
   .description('MCSManager CLI & AI Agent toolsuite')
-  .version('1.0.0')
+  .version(packageMetadata.version)
   .option('-u, --url <url>', 'MCSManager panel URL (e.g. http://localhost:23333)')
   .option('-k, --key <key>', 'MCSManager API Key')
   .option('-j, --json', 'Output raw JSON for script/agent parsing', false);
