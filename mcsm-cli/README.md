@@ -6,6 +6,8 @@
 
 ## 安裝
 
+需要 Node.js `>=22.12.0`。
+
 ```sh
 npm install -g mcsm-cli
 mcsm --help
