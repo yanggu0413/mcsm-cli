@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import childProcess from 'child_process';
 
 export interface CLIStoredConfig {
   url?: string;
@@ -27,18 +28,40 @@ export function maskApiKey(apiKey?: string | null): string | null {
   return `${apiKey.slice(0, 3)}...${apiKey.slice(-3)}`;
 }
 
+function secureWindowsConfigFile(): void {
+  const username = process.env.USERNAME || os.userInfo().username;
+  const principal = process.env.USERDOMAIN
+    ? `${process.env.USERDOMAIN}\\${username}`
+    : username;
+
+  if (!principal) {
+    throw new Error('Unable to determine the current Windows user for config ACL');
+  }
+
+  childProcess.execFileSync(
+    'icacls.exe',
+    [CONFIG_PATH, '/reset', '/inheritance:r', '/grant:r', `${principal}:(F)`],
+    { stdio: 'ignore' }
+  );
+}
+
 export function saveStoredConfig(newConfig: CLIStoredConfig): void {
   const existing = loadStoredConfig();
   const merged = { ...existing, ...newConfig };
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(merged, null, 2), {
+  const serialized = JSON.stringify(merged, null, 2);
+
+  if (process.platform === 'win32') {
+    fs.writeFileSync(CONFIG_PATH, '', { encoding: 'utf-8', flag: 'a' });
+    secureWindowsConfigFile();
+    fs.writeFileSync(CONFIG_PATH, serialized, 'utf-8');
+    return;
+  }
+
+  fs.writeFileSync(CONFIG_PATH, serialized, {
     encoding: 'utf-8',
     mode: 0o600,
   });
-  try {
-    fs.chmodSync(CONFIG_PATH, 0o600);
-  } catch {
-    // chmod may not be fully supported on some Windows filesystems
-  }
+  fs.chmodSync(CONFIG_PATH, 0o600);
 }
 
 export function getStoredConfigPath(): string {

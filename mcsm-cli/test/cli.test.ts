@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'fs';
+import os from 'os';
+import childProcess from 'child_process';
 import {
   resolveClientConfig,
   saveStoredConfig,
@@ -63,25 +65,53 @@ describe('CLI Configuration Management', () => {
     expect(resolved.apiKey).toBe('env-key');
   });
 
-  it('merges and writes stored config with 0o600 mode', () => {
+  it('merges and writes stored config with platform-specific private permissions', () => {
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'readFileSync').mockReturnValue(
       JSON.stringify({ url: 'http://localhost:23333', apiKey: 'old-key' })
     );
     const writeSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
     const chmodSpy = vi.spyOn(fs, 'chmodSync').mockImplementation(() => {});
+    const aclSpy = vi
+      .spyOn(childProcess, 'execFileSync')
+      .mockReturnValue(Buffer.from(''));
 
     saveStoredConfig({ apiKey: 'new-key' });
 
-    expect(writeSpy).toHaveBeenCalledWith(
-      expect.stringContaining('.mcsmrc.json'),
-      expect.stringContaining('"apiKey": "new-key"'),
-      expect.objectContaining({ encoding: 'utf-8', mode: 0o600 })
-    );
-    expect(chmodSpy).toHaveBeenCalledWith(
-      expect.stringContaining('.mcsmrc.json'),
-      0o600
-    );
+    const configPath = expect.stringContaining('.mcsmrc.json');
+    if (process.platform === 'win32') {
+      const username = process.env.USERNAME || os.userInfo().username;
+      const principal = process.env.USERDOMAIN
+        ? `${process.env.USERDOMAIN}\\${username}`
+        : username;
+
+      expect(writeSpy).toHaveBeenNthCalledWith(
+        1,
+        configPath,
+        '',
+        { encoding: 'utf-8', flag: 'a' }
+      );
+      expect(aclSpy).toHaveBeenCalledWith(
+        'icacls.exe',
+        [configPath, '/reset', '/inheritance:r', '/grant:r', `${principal}:(F)`],
+        { stdio: 'ignore' }
+      );
+      expect(writeSpy).toHaveBeenNthCalledWith(
+        2,
+        configPath,
+        expect.stringContaining('"apiKey": "new-key"'),
+        'utf-8'
+      );
+      expect(chmodSpy).not.toHaveBeenCalled();
+    } else {
+      expect(writeSpy).toHaveBeenCalledWith(
+        configPath,
+        expect.stringContaining('"apiKey": "new-key"'),
+        expect.objectContaining({ encoding: 'utf-8', mode: 0o600 })
+      );
+      expect(chmodSpy).toHaveBeenCalledWith(configPath, 0o600);
+      expect(aclSpy).not.toHaveBeenCalled();
+    }
   });
 
   it('masks sensitive API keys securely without leaking short keys', () => {
