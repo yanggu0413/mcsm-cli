@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+### Fixed
+
+- 修正 Windows `config set` 的 ACL 指令：將不相容的 `/reset` 與 `/inheritance:r /grant:r` 拆為兩次 `icacls` 呼叫，避免退出碼 87 導致憑證無法儲存。
+- 補上實際 Windows 檔案 ACL 整合測試，驗證新建、讀取、更新與移除既有 Everyone 權限；並驗證 ACL 設定失敗時不寫入新憑證。
+
 ## 1.1.0
 
 ### Changed

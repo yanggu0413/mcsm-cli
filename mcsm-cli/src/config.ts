@@ -38,9 +38,11 @@ function secureWindowsConfigFile(): void {
     throw new Error('Unable to determine the current Windows user for config ACL');
   }
 
+  // /reset is a separate icacls operation and cannot be combined with /inheritance.
+  childProcess.execFileSync('icacls.exe', [CONFIG_PATH, '/reset'], { stdio: 'ignore' });
   childProcess.execFileSync(
     'icacls.exe',
-    [CONFIG_PATH, '/reset', '/inheritance:r', '/grant:r', `${principal}:(F)`],
+    [CONFIG_PATH, '/inheritance:r', '/grant:r', `${principal}:(F)`],
     { stdio: 'ignore' }
   );
 }

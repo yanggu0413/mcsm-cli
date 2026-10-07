@@ -86,11 +86,21 @@ describe('CLI Configuration Management', () => {
         '',
         { encoding: 'utf-8', flag: 'a' }
       );
-      expect(aclSpy).toHaveBeenCalledWith(
+      expect(aclSpy).toHaveBeenNthCalledWith(
+        1,
         'icacls.exe',
-        [configPath, '/reset', '/inheritance:r', '/grant:r', `${principal}:(F)`],
+        [configPath, '/reset'],
         { stdio: 'ignore' }
       );
+      expect(aclSpy).toHaveBeenNthCalledWith(
+        2,
+        'icacls.exe',
+        [configPath, '/inheritance:r', '/grant:r', `${principal}:(F)`],
+        { stdio: 'ignore' }
+      );
+      expect(aclSpy).toHaveBeenCalledTimes(2);
+      expect(writeSpy.mock.invocationCallOrder[0]).toBeLessThan(aclSpy.mock.invocationCallOrder[0]);
+      expect(aclSpy.mock.invocationCallOrder[1]).toBeLessThan(writeSpy.mock.invocationCallOrder[1]);
       expect(writeSpy).toHaveBeenNthCalledWith(
         2,
         configPath,
@@ -107,6 +117,23 @@ describe('CLI Configuration Management', () => {
       expect(chmodSpy).toHaveBeenCalledWith(configPath, 0o600);
       expect(aclSpy).not.toHaveBeenCalled();
     }
+  });
+
+  it.runIf(process.platform === 'win32').each([1, 2])('does not overwrite credentials when ACL operation %i fails', (failureStep) => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+    vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify({ apiKey: 'old-key' }));
+    const writeSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    let aclCalls = 0;
+    const aclSpy = vi.spyOn(childProcess, 'execFileSync').mockImplementation(() => {
+      aclCalls += 1;
+      if (aclCalls === failureStep) throw new Error('ACL operation failed');
+      return Buffer.from('');
+    });
+
+    expect(() => saveStoredConfig({ apiKey: 'new-key' })).toThrow('ACL operation failed');
+    expect(aclSpy).toHaveBeenCalledTimes(failureStep);
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('.mcsmrc.json'), '', { encoding: 'utf-8', flag: 'a' });
   });
 
   it('masks sensitive API keys securely without leaking short keys', () => {
