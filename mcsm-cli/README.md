@@ -102,16 +102,6 @@ src/
   output.ts                # 文字/JSON 輸出與錯誤格式
 ```
 
-新增子指令時，放入對應領域模組；新增領域時，在 `cli/program.ts` 註冊。各指令透過 `CLIContext` 取得 client，避免自行維護全域 Commander 狀態。`createProgram()` 每次建立獨立指令樹；組裝、runner 與領域模組在匯入時不解析 argv 或連線，`index.ts` 是會執行 CLI 的入口。
-
-測試可注入 `createClient` 與 `readStdin`，驗證指令解析、API method/path/body/query 與輸出，無需真實面板。測試依設定、工具、client、指令與執行流程分組。
-
-此次重構保留原指令用法與輸出格式，並修正以下行為：
-
-- 網址下載拒絕 IPv6 loopback（例如 `http://[::1]/file`），與既有本機網址限制一致。
-- `instance log --size` 對 B、KB、MB 及無單位數值一致套用 100KB 上限；無單位數值沿用 KB。
-- `schedule create --count` 僅接受 `-1` 或非負安全整數。預設為 `-1`，`0` 保留；無效值會報錯並以退出碼 1 結束，不送出排程請求。
-
 ## 授權
 
 MIT License
